@@ -27,7 +27,11 @@ func HomeDirectoryPath() string {
 
 // TrashPath is the path to the trash where "deleted" files go to.
 func TrashPath() string {
-	return path.Join(HomeDirectoryPath(), trashfile)
+	trashPath := path.Join(HomeDirectoryPath(), trashfile)
+	if !PathExists(trashPath) {
+		os.Mkdir(trashPath, os.ModePerm)
+	}
+	return trashPath
 }
 
 // PathExists determines whether a given path (to either a file or directory) exists.
@@ -40,9 +44,8 @@ func PathExists(path string) bool {
 // safe trash.
 func MoveFileToTrash(containingDirectory string, fileName string) {
 	originalPath := path.Join(containingDirectory, fileName)
-	if !PathExists(originalPath) {
-		os.Mkdir(TrashPath(), os.ModePerm)
+	if PathExists(originalPath) {
+		newPath := path.Join(TrashPath(), fileName)
+		os.Rename(originalPath, newPath)
 	}
-	newPath := path.Join(TrashPath(), fileName)
-	os.Rename(originalPath, newPath)
 }

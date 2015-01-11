@@ -26,5 +26,8 @@ func main() {
 		fileName := flag.Arg(0)
 		fmt.Println("Deleting", fileName)
 		trashman.MoveFileToTrash(workingDirectory, fileName)
+		config, _ := trashman.NewConfig()
+		fmt.Println(config)
+		config.WriteConfig()
 	}
 }
