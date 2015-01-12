@@ -1,3 +1,7 @@
+/*
+Package trash contains logic for moving files to the .safetrash, deleting them permanently, and
+updating the config file. Most of this funcionality is in the Trash struct.
+*/
 package trash
 
 import (
@@ -8,17 +12,25 @@ import (
 	"strconv"
 )
 
+// Trash is the object representing useful info about the .safetrash.
 type Trash struct {
-	TrashSize  int
-	TrashPath  string
-	ConfigPath string
+	TrashSize  int    // The size of the .safetrash in bytes.
+	TrashPath  string // The path of the .safetrash (inside the HOME directory).
+	ConfigPath string // The path of the .trashconfig file (inside .safetrash directory).
 }
 
+// NewTrash creates a Trash object (reading from the .trashconfig, if it exists).
+// If there is no .trashconfig, then the .safetrash begins with a default capacity
+// (see the constants.go file).
 func NewTrash() *Trash {
 	t := &Trash{}
-	t.TrashPath = path.Join(HomeDirectoryPath(), TrashFileName)
+
+	// Set the paths and default size.
+	t.TrashPath = path.Join(HomeDirectoryPath(), TrashDirectoryName)
 	t.ConfigPath = path.Join(t.TrashPath, ConfigFileName)
 	t.TrashSize = DefaultTrashSize
+
+	// Attempt to update size from .trashconfig, if it exists.
 	if PathExists(t.ConfigPath) {
 		file, err := os.Open(t.ConfigPath)
 		if err != nil {
@@ -27,6 +39,7 @@ func NewTrash() *Trash {
 		defer file.Close()
 		scanner := bufio.NewScanner(file)
 		if scanner.Scan() {
+			// Read the first line of the .trashconfig, which is the size of the .safetrash.
 			trashSize, err := strconv.Atoi(scanner.Text())
 			if err != nil {
 				return t
@@ -37,6 +50,7 @@ func NewTrash() *Trash {
 	return t
 }
 
+// DeleteFile moves a file (fileName) inside a directory (containingDir) into the .safetrash.
 func (t *Trash) DeleteFile(containingDir string, fileName string) {
 	originalPath := path.Join(containingDir, fileName)
 	if PathExists(originalPath) {
@@ -45,6 +59,7 @@ func (t *Trash) DeleteFile(containingDir string, fileName string) {
 	}
 }
 
+// Save updates the .trashconfig, with the current values stored in the Trash object.
 func (t *Trash) Save() {
 	if !PathExists(t.TrashPath) {
 		os.Mkdir(t.TrashPath, os.ModePerm)
