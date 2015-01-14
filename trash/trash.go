@@ -45,6 +45,11 @@ func NewTrash() *Trash {
 				return t
 			}
 			t.TrashSize = trashSize
+			if t.TrashSize > MaxTrashSize {
+				t.TrashSize = MaxTrashSize
+			} else if t.TrashSize < MinTrashSize {
+				t.TrashSize = MinTrashSize
+			}
 		}
 	}
 	return t
