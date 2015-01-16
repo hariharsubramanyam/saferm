@@ -23,10 +23,9 @@ func main() {
 	// Create a Trash object to handle the user's action.
 	userTrash := trash.NewTrash()
 
-	newTrashSize := 1024 * 1024 * *trashSize
-	if newTrashSize >= trash.MinTrashSize && newTrashSize <= trash.MaxTrashSize {
+	if *trashSize >= trash.MinTrashSize && *trashSize <= trash.MaxTrashSize {
 		fmt.Println("Changing trash size")
-		userTrash.TrashSize = newTrashSize
+		userTrash.TrashSize = *trashSize
 		userTrash.Save()
 	}
 
