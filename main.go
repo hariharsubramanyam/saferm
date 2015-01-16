@@ -11,7 +11,6 @@ package main
 
 import (
 	"flag"
-	"fmt"
 	"github.com/hariharsubramanyam/saferm/trash"
 	"os"
 )
@@ -24,7 +23,6 @@ func main() {
 	userTrash := trash.NewTrash()
 
 	if *trashSize >= trash.MinTrashSize && *trashSize <= trash.MaxTrashSize {
-		fmt.Println("Changing trash size")
 		userTrash.TrashSize = *trashSize
 		userTrash.Save()
 	}
@@ -33,7 +31,6 @@ func main() {
 	if err == nil {
 		// Delet the file.
 		fileName := flag.Arg(0)
-		fmt.Println(fileName)
 		userTrash.DeleteFile(workingDirectory, fileName)
 	}
 

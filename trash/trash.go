@@ -14,9 +14,10 @@ import (
 
 // Trash is the object representing useful info about the .safetrash.
 type Trash struct {
-	TrashSize  int    // The size of the .safetrash in bytes.
-	TrashPath  string // The path of the .safetrash (inside the HOME directory).
-	ConfigPath string // The path of the .trashconfig file (inside .safetrash directory).
+	TrashSize    int      // The size of the .safetrash in bytes.
+	TrashPath    string   // The path of the .safetrash (inside the HOME directory).
+	ConfigPath   string   // The path of the .trashconfig file (inside .safetrash directory).
+	DeletedItems []string // The slice of items that have been deleted (most recent is last).
 }
 
 // NewTrash creates a Trash object (reading from the .trashconfig, if it exists).
@@ -51,6 +52,11 @@ func NewTrash() *Trash {
 				t.TrashSize = MinTrashSize
 			}
 		}
+
+		for scanner.Scan() {
+			deletedItem := scanner.Text()
+			t.DeletedItems = append(t.DeletedItems, deletedItem)
+		}
 	}
 	return t
 }
@@ -61,6 +67,7 @@ func (t *Trash) DeleteFile(containingDir string, fileName string) {
 	if PathExists(originalPath) {
 		newPath := path.Join(t.TrashPath, fileName)
 		os.Rename(originalPath, newPath)
+		t.DeletedItems = append(t.DeletedItems, fileName)
 	}
 }
 
@@ -69,6 +76,9 @@ func (t *Trash) Save() {
 	if !PathExists(t.TrashPath) {
 		os.Mkdir(t.TrashPath, os.ModePerm)
 	}
-	trashSize := strconv.Itoa(t.TrashSize)
-	ioutil.WriteFile(t.ConfigPath, []byte(trashSize), os.ModePerm)
+	configString := strconv.Itoa(t.TrashSize)
+	for _, deletedItem := range t.DeletedItems {
+		configString += "\n" + deletedItem
+	}
+	ioutil.WriteFile(t.ConfigPath, []byte(configString), os.ModePerm)
 }
