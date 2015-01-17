@@ -14,7 +14,7 @@ import (
 
 // Trash is the object representing useful info about the .safetrash.
 type Trash struct {
-	TrashSize    int      // The size of the .safetrash in bytes.
+	TrashSize    int64    // The size of the .safetrash in bytes.
 	TrashPath    string   // The path of the .safetrash (inside the HOME directory).
 	ConfigPath   string   // The path of the .trashconfig file (inside .safetrash directory).
 	DeletedItems []string // The slice of items that have been deleted (most recent is last).
@@ -41,7 +41,7 @@ func NewTrash() *Trash {
 		scanner := bufio.NewScanner(file)
 		if scanner.Scan() {
 			// Read the first line of the .trashconfig, which is the size of the .safetrash.
-			trashSize, err := strconv.Atoi(scanner.Text())
+			trashSize, err := strconv.ParseInt(scanner.Text(), 10, 64)
 			if err != nil {
 				return t
 			}
@@ -80,8 +80,33 @@ func (t *Trash) DeleteFile(path string) {
 		newPath := filepath.Join(t.TrashPath, fileName)
 		os.Rename(absPath, newPath)
 		t.DeletedItems = append(t.DeletedItems, fileName)
+		t.DeleteOldestIfNeeded()
 	}
 }
+
+// DeleteOldestIfNeeded keeps deleting the oldest item from the trash until its size is
+// smaller than the permitted size.
+func (t *Trash) DeleteOldestIfNeeded() {
+	usedSpace := t.SpaceUsed()
+	trashSizeInBytes := t.TrashSize * 1024 * 1024
+	lastDeletedIndex := -1
+	for usedSpace > trashSizeInBytes {
+		for i, deletedItem := range t.DeletedItems {
+			pathToDeletedItem := filepath.Join(t.TrashPath, deletedItem)
+			if PathExists(pathToDeletedItem) {
+				os.Remove(pathToDeletedItem)
+				lastDeletedIndex = i
+				break
+			} // if
+		} // inner for
+		usedSpace = t.SpaceUsed()
+	} // outer for
+
+	// Update the list of deleted items, because we may have deleted some.
+	if lastDeletedIndex != -1 {
+		t.DeletedItems = t.DeletedItems[lastDeletedIndex+1:]
+	}
+} // function
 
 // SpaceUsed determines the current size of the .safetrash.
 func (t *Trash) SpaceUsed() int64 {
@@ -103,7 +128,7 @@ func (t *Trash) Save() {
 	}
 
 	// Write the .trashconfig file.
-	configString := strconv.Itoa(t.TrashSize)
+	configString := strconv.FormatInt(t.TrashSize, 10)
 	for _, deletedItem := range t.DeletedItems {
 		configString += "\n" + deletedItem
 	}

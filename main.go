@@ -39,7 +39,7 @@ import (
 )
 
 func main() {
-	trashSize := flag.Int("trashsize", -1, "Set the trash size in MB")
+	trashSize := flag.Int64("trashsize", -1, "Set the trash size in MB")
 	flag.Parse()
 
 	if *trashSize != -1 { // Attempt to set the trash size.
@@ -56,7 +56,7 @@ func Delete(path string) {
 	userTrash.Save()
 }
 
-func SetTrashSize(trashSize *int) {
+func SetTrashSize(trashSize *int64) {
 	userTrash := trash.NewTrash()
 	if *trashSize >= trash.MinTrashSize && *trashSize <= trash.MaxTrashSize {
 		userTrash.TrashSize = *trashSize
