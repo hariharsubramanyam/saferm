@@ -26,11 +26,15 @@ type Trash struct {
 // If there is no .trashconfig, then the .safetrash begins with a default capacity
 // (see the constants.go file).
 func NewTrash() *Trash {
+	return NewTrashWithPaths(HomeDirectoryPath(), TrashDirectoryName, ConfigFileName)
+}
+
+func NewTrashWithPaths(trashPath string, trashName string, configFileName string) *Trash {
 	t := &Trash{}
 
 	// Set the paths and default size.
-	t.TrashPath = filepath.Join(HomeDirectoryPath(), TrashDirectoryName)
-	t.ConfigPath = filepath.Join(t.TrashPath, ConfigFileName)
+	t.TrashPath = filepath.Join(trashPath, trashName)
+	t.ConfigPath = filepath.Join(trashPath, configFileName)
 	t.TrashSize = DefaultTrashSize
 
 	// The trash is not verbose.
