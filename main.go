@@ -35,19 +35,29 @@ package main
 
 import (
 	"flag"                                       // For command line args.
+	"fmt"                                        // For printing trash contents.
 	"github.com/hariharsubramanyam/saferm/trash" // For trash operations.
+	"strings"                                    // For joining contents slice into string.
 )
 
 func main() {
 	trashSize := flag.Int64("trashsize", -1, "Set the trash size in MB")
+	contents := flag.Bool("contents", false, "Display the contents of the .safetrash")
 	flag.Parse()
 
-	if *trashSize != -1 { // Attempt to set the trash size.
+	if *contents { // Display the contents of the trash.
+		PrintTrashContents()
+	} else if *trashSize != -1 { // Attempt to set the trash size.
 		SetTrashSize(trashSize)
 	} else if flag.NArg() > 0 { // Attempt to delete the file at the path.
 		Delete(flag.Arg(0))
 	}
+}
 
+func PrintTrashContents() {
+	userTrash := trash.NewTrash()
+	contents := userTrash.Contents()
+	fmt.Println(strings.Join(contents, ", "))
 }
 
 func Delete(path string) {

@@ -120,6 +120,19 @@ func (t *Trash) SpaceUsed() int64 {
 	return spaceUsed
 }
 
+func (t *Trash) Contents() []string {
+	contents := []string{}
+	updateContents := func(path string, info os.FileInfo, err error) error {
+		base := filepath.Base(path)
+		if base != ConfigFileName && base != TrashDirectoryName {
+			contents = append(contents, base)
+		}
+		return nil
+	}
+	filepath.Walk(t.TrashPath, updateContents)
+	return contents
+}
+
 // Save updates the .trashconfig, with the current values stored in the Trash object.
 func (t *Trash) Save() {
 	// Create the .safetrash/ if it doesn't exist.
