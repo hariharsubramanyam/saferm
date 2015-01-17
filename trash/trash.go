@@ -8,7 +8,7 @@ import (
 	"bufio"
 	"io/ioutil"
 	"os"
-	"path"
+	"path/filepath"
 	"strconv"
 )
 
@@ -27,8 +27,8 @@ func NewTrash() *Trash {
 	t := &Trash{}
 
 	// Set the paths and default size.
-	t.TrashPath = path.Join(HomeDirectoryPath(), TrashDirectoryName)
-	t.ConfigPath = path.Join(t.TrashPath, ConfigFileName)
+	t.TrashPath = filepath.Join(HomeDirectoryPath(), TrashDirectoryName)
+	t.ConfigPath = filepath.Join(t.TrashPath, ConfigFileName)
 	t.TrashSize = DefaultTrashSize
 
 	// Attempt to update size from .trashconfig, if it exists.
@@ -46,6 +46,8 @@ func NewTrash() *Trash {
 				return t
 			}
 			t.TrashSize = trashSize
+
+			// Constrain the trash size.
 			if t.TrashSize > MaxTrashSize {
 				t.TrashSize = MaxTrashSize
 			} else if t.TrashSize < MinTrashSize {
@@ -53,6 +55,7 @@ func NewTrash() *Trash {
 			}
 		}
 
+		// Read the deleted items.
 		for scanner.Scan() {
 			deletedItem := scanner.Text()
 			t.DeletedItems = append(t.DeletedItems, deletedItem)
@@ -61,21 +64,33 @@ func NewTrash() *Trash {
 	return t
 }
 
-// DeleteFile moves a file (fileName) inside a directory (containingDir) into the .safetrash.
-func (t *Trash) DeleteFile(containingDir string, fileName string) {
-	originalPath := path.Join(containingDir, fileName)
-	if PathExists(originalPath) {
-		newPath := path.Join(t.TrashPath, fileName)
-		os.Rename(originalPath, newPath)
+// DeleteFile deletes the file at the given path. If the path points to a directory, this function
+// does nothing.
+func (t *Trash) DeleteFile(path string) {
+	// First get an absolute path.
+	absPath, err := filepath.Abs(path)
+	if err != nil {
+		return
+	}
+
+	// Ensure that this is a valid path and NOT a directory.
+	if isDir, err := IsDirectory(absPath); PathExists(absPath) && err == nil && !isDir {
+		// Move the file from its current location to .safetrash/
+		fileName := filepath.Base(absPath)
+		newPath := filepath.Join(t.TrashPath, fileName)
+		os.Rename(absPath, newPath)
 		t.DeletedItems = append(t.DeletedItems, fileName)
 	}
 }
 
 // Save updates the .trashconfig, with the current values stored in the Trash object.
 func (t *Trash) Save() {
+	// Create the .safetrash/ if it doesn't exist.
 	if !PathExists(t.TrashPath) {
 		os.Mkdir(t.TrashPath, os.ModePerm)
 	}
+
+	// Write the .trashconfig file.
 	configString := strconv.Itoa(t.TrashSize)
 	for _, deletedItem := range t.DeletedItems {
 		configString += "\n" + deletedItem
