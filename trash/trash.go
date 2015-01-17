@@ -83,6 +83,18 @@ func (t *Trash) DeleteFile(path string) {
 	}
 }
 
+// SpaceUsed determines the current size of the .safetrash.
+func (t *Trash) SpaceUsed() int64 {
+	var spaceUsed int64 = 0
+	updateSpace := func(path string, info os.FileInfo, err error) error {
+		spaceUsed += info.Size()
+		return nil
+	}
+
+	filepath.Walk(t.TrashPath, updateSpace)
+	return spaceUsed
+}
+
 // Save updates the .trashconfig, with the current values stored in the Trash object.
 func (t *Trash) Save() {
 	// Create the .safetrash/ if it doesn't exist.
