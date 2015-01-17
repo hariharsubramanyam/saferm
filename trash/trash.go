@@ -29,13 +29,18 @@ func NewTrash() *Trash {
 	return NewTrashWithPaths(HomeDirectoryPath(), TrashDirectoryName, ConfigFileName)
 }
 
-func NewTrashWithPaths(trashPath string, trashName string, configFileName string) *Trash {
+func NewTrashWithPaths(dirContainingTrash string, trashName string, configFileName string) *Trash {
 	t := &Trash{}
 
 	// Set the paths and default size.
-	t.TrashPath = filepath.Join(trashPath, trashName)
-	t.ConfigPath = filepath.Join(trashPath, configFileName)
+	t.TrashPath = filepath.Join(dirContainingTrash, trashName)
+	t.ConfigPath = filepath.Join(t.TrashPath, configFileName)
 	t.TrashSize = DefaultTrashSize
+
+	// Create the .safetrash/ if it doesn't exist.
+	if !PathExists(t.TrashPath) {
+		os.Mkdir(t.TrashPath, os.ModePerm)
+	}
 
 	// The trash is not verbose.
 	t.Verbose = false
@@ -167,11 +172,6 @@ func (t *Trash) ClearTrash() {
 
 // Save updates the .trashconfig, with the current values stored in the Trash object.
 func (t *Trash) Save() {
-	// Create the .safetrash/ if it doesn't exist.
-	if !PathExists(t.TrashPath) {
-		os.Mkdir(t.TrashPath, os.ModePerm)
-	}
-
 	// Write the .trashconfig file.
 	configString := strconv.FormatInt(t.TrashSize, 10)
 	for _, deletedItem := range t.DeletedItems {
