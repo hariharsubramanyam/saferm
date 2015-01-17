@@ -69,9 +69,10 @@ func NewTrash() *Trash {
 	return t
 }
 
-func (t *Trash) Log(message string) {
+// Log will print when in verbose mode.
+func (t *Trash) Log(messages ...interface{}) {
 	if t.Verbose {
-		fmt.Println(message)
+		fmt.Println(messages...)
 	}
 }
 
@@ -81,6 +82,7 @@ func (t *Trash) DeleteFile(path string) {
 	// First get an absolute path.
 	absPath, err := filepath.Abs(path)
 	if err != nil {
+		t.Log(err)
 		return
 	}
 
@@ -91,7 +93,10 @@ func (t *Trash) DeleteFile(path string) {
 		newPath := filepath.Join(t.TrashPath, fileName)
 		os.Rename(absPath, newPath)
 		t.DeletedItems = append(t.DeletedItems, fileName)
+		t.Log("Deleted", fileName)
 		t.DeleteOldestIfNeeded()
+	} else {
+		t.Log("Invalid path:", absPath)
 	}
 }
 
@@ -102,10 +107,13 @@ func (t *Trash) DeleteOldestIfNeeded() {
 	trashSizeInBytes := t.TrashSize * 1024 * 1024
 	lastDeletedIndex := -1
 	for usedSpace > trashSizeInBytes {
+		t.Log("Used space:", usedSpace/1024/1024, "MB, Trash size", t.TrashSize, "MB")
+		t.Log("Need to clear space...")
 		for i, deletedItem := range t.DeletedItems {
 			pathToDeletedItem := filepath.Join(t.TrashPath, deletedItem)
 			if PathExists(pathToDeletedItem) {
 				os.Remove(pathToDeletedItem)
+				t.Log("Deleting", deletedItem)
 				lastDeletedIndex = i
 				break
 			} // if
@@ -147,6 +155,7 @@ func (t *Trash) Contents() []string {
 func (t *Trash) ClearTrash() {
 	contents := t.Contents()
 	for _, content := range contents {
+		t.Log("Deleting", content)
 		os.Remove(filepath.Join(t.TrashPath, content))
 	}
 	t.DeletedItems = make([]string, 0)
