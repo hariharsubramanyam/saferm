@@ -41,44 +41,46 @@ import (
 )
 
 func main() {
-	trashSize := flag.Int64("trashsize", -1, "Set the trash size in MB")
+	trashSize := flag.Int64("setsize", -1, "Set the trash size in MB")
 	contents := flag.Bool("contents", false, "Display the contents of the .safetrash")
 	clearTrash := flag.Bool("cleartrash", false, "Delete everything in the .safetrash")
+	verbose := flag.Bool("verbose", false, "Print verbose output during trash operations")
+	used := flag.Bool("used", false, "See the space used in the trash and its total size in MB")
 	flag.Parse()
 
-	if *contents { // Display the contents of the trash.
-		PrintTrashContents()
-	} else if *trashSize != -1 { // Attempt to set the trash size.
-		SetTrashSize(trashSize)
-	} else if *clearTrash {
-		ClearTrash()
-	} else if flag.NArg() > 0 { // Attempt to delete the file at the path.
-		Delete(flag.Arg(0))
+	userTrash := trash.NewTrash()
+
+	if *verbose {
+		// Make verbose outputs.
+		userTrash.Verbose = true
 	}
-}
 
-func ClearTrash() {
-	userTrash := trash.NewTrash()
-	userTrash.ClearTrash()
-	userTrash.Save()
-}
+	if *contents {
+		// Print the contents of the trash.
+		fmt.Println("Trash Contents", strings.Join(userTrash.Contents(), ", "))
+	}
 
-func PrintTrashContents() {
-	userTrash := trash.NewTrash()
-	contents := userTrash.Contents()
-	fmt.Println(strings.Join(contents, ", "))
-}
-
-func Delete(path string) {
-	userTrash := trash.NewTrash()
-	userTrash.DeleteFile(path)
-	userTrash.Save()
-}
-
-func SetTrashSize(trashSize *int64) {
-	userTrash := trash.NewTrash()
 	if *trashSize >= trash.MinTrashSize && *trashSize <= trash.MaxTrashSize {
+		// Reset the trash size.
 		userTrash.TrashSize = *trashSize
-		userTrash.Save()
 	}
+
+	if *clearTrash {
+		// Delete all the items in the trash.
+		userTrash.ClearTrash()
+	}
+
+	if *used {
+		fmt.Println("Used Space: ", userTrash.SpaceUsed()/1024/1024, "MB, Capacity:",
+			userTrash.TrashSize, "MB")
+	}
+
+	if flag.NArg() > 0 {
+		if trash.PathExists(flag.Arg(0)) {
+			// Delete the specified path.
+			userTrash.DeleteFile(flag.Arg(0))
+		}
+	}
+
+	userTrash.Save()
 }

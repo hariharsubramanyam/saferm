@@ -6,6 +6,7 @@ package trash
 
 import (
 	"bufio"
+	"fmt"
 	"io/ioutil"
 	"os"
 	"path/filepath"
@@ -18,6 +19,7 @@ type Trash struct {
 	TrashPath    string   // The path of the .safetrash (inside the HOME directory).
 	ConfigPath   string   // The path of the .trashconfig file (inside .safetrash directory).
 	DeletedItems []string // The slice of items that have been deleted (most recent is last).
+	Verbose      bool
 }
 
 // NewTrash creates a Trash object (reading from the .trashconfig, if it exists).
@@ -30,6 +32,9 @@ func NewTrash() *Trash {
 	t.TrashPath = filepath.Join(HomeDirectoryPath(), TrashDirectoryName)
 	t.ConfigPath = filepath.Join(t.TrashPath, ConfigFileName)
 	t.TrashSize = DefaultTrashSize
+
+	// The trash is not verbose.
+	t.Verbose = false
 
 	// Attempt to update size from .trashconfig, if it exists.
 	if PathExists(t.ConfigPath) {
@@ -62,6 +67,12 @@ func NewTrash() *Trash {
 		}
 	}
 	return t
+}
+
+func (t *Trash) Log(message string) {
+	if t.Verbose {
+		fmt.Println(message)
+	}
 }
 
 // DeleteFile deletes the file at the given path. If the path points to a directory, this function
