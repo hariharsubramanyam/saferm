@@ -43,15 +43,24 @@ import (
 func main() {
 	trashSize := flag.Int64("trashsize", -1, "Set the trash size in MB")
 	contents := flag.Bool("contents", false, "Display the contents of the .safetrash")
+	clearTrash := flag.Bool("cleartrash", false, "Delete everything in the .safetrash")
 	flag.Parse()
 
 	if *contents { // Display the contents of the trash.
 		PrintTrashContents()
 	} else if *trashSize != -1 { // Attempt to set the trash size.
 		SetTrashSize(trashSize)
+	} else if *clearTrash {
+		ClearTrash()
 	} else if flag.NArg() > 0 { // Attempt to delete the file at the path.
 		Delete(flag.Arg(0))
 	}
+}
+
+func ClearTrash() {
+	userTrash := trash.NewTrash()
+	userTrash.ClearTrash()
+	userTrash.Save()
 }
 
 func PrintTrashContents() {

@@ -121,7 +121,7 @@ func (t *Trash) SpaceUsed() int64 {
 }
 
 func (t *Trash) Contents() []string {
-	contents := []string{}
+	contents := make([]string, 0)
 	updateContents := func(path string, info os.FileInfo, err error) error {
 		base := filepath.Base(path)
 		if base != ConfigFileName && base != TrashDirectoryName {
@@ -131,6 +131,14 @@ func (t *Trash) Contents() []string {
 	}
 	filepath.Walk(t.TrashPath, updateContents)
 	return contents
+}
+
+func (t *Trash) ClearTrash() {
+	contents := t.Contents()
+	for _, content := range contents {
+		os.Remove(filepath.Join(t.TrashPath, content))
+	}
+	t.DeletedItems = make([]string, 0)
 }
 
 // Save updates the .trashconfig, with the current values stored in the Trash object.
