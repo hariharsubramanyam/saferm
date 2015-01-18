@@ -6,6 +6,7 @@ package trash
 
 import (
 	"bufio"
+	"errors"
 	"fmt"
 	"io/ioutil"
 	"os"
@@ -85,28 +86,38 @@ func (t *Trash) Log(messages ...interface{}) {
 	}
 }
 
-// DeleteFile deletes the file at the given path. If the path points to a directory, this function
-// does nothing.
-func (t *Trash) DeleteFile(path string) {
+// DeleteFile deletes the file at the given path.
+// If the path points to a directory, it returns an error.
+func (t *Trash) DeleteFile(path string) error {
 	// First get an absolute path.
 	absPath, err := filepath.Abs(path)
 	if err != nil {
 		t.Log(err)
-		return
+		return err
 	}
 
 	// Ensure that this is a valid path and NOT a directory.
-	if isDir, err := IsDirectory(absPath); PathExists(absPath) && err == nil && !isDir {
+	if isDir, err := IsDirectory(absPath); err == nil && PathExists(absPath) && !isDir {
 		// Move the file from its current location to .safetrash/
-		fileName := filepath.Base(absPath)
-		newPath := filepath.Join(t.TrashPath, fileName)
-		os.Rename(absPath, newPath)
-		t.DeletedItems = append(t.DeletedItems, fileName)
-		t.Log("Deleted", fileName)
-		t.DeleteOldestIfNeeded()
+		return t.Delete(absPath)
+	} else if isDir {
+		return errors.New(fmt.Sprintln(absPath, "is a directory, use the -r flag to delete it"))
 	} else {
-		t.Log("Invalid path:", absPath)
+		return errors.New(fmt.Sprintln(absPath, "is not a valid path, are you sure it exists?"))
 	}
+
+	return nil
+}
+
+// Delete deletes the item (file or directory) at the given absolute path.
+func (t *Trash) Delete(absPath string) error {
+	fileName := filepath.Base(absPath)
+	newPath := filepath.Join(t.TrashPath, fileName)
+	os.Rename(absPath, newPath)
+	t.DeletedItems = append(t.DeletedItems, fileName)
+	t.Log("Deleted", fileName)
+	t.DeleteOldestIfNeeded()
+	return nil
 }
 
 // DeleteOldestIfNeeded keeps deleting the oldest item from the trash until its size is
@@ -148,19 +159,23 @@ func (t *Trash) SpaceUsed() int64 {
 	return spaceUsed
 }
 
+// Contents returns the files and directories in the .safetrash.
 func (t *Trash) Contents() []string {
+	paths, err := filepath.Glob(filepath.Join(t.TrashPath, "*"))
 	contents := make([]string, 0)
-	updateContents := func(path string, info os.FileInfo, err error) error {
-		base := filepath.Base(path)
-		if base != ConfigFileName && base != TrashDirectoryName {
-			contents = append(contents, base)
+	if err == nil {
+		for _, path := range paths {
+			base := filepath.Base(path)
+			if base == ConfigFileName {
+				continue
+			}
+			contents = append(contents, filepath.Base(base))
 		}
-		return nil
 	}
-	filepath.Walk(t.TrashPath, updateContents)
 	return contents
 }
 
+// ClearTrash removes everything in the .safetrash (except for the .trashconfig).
 func (t *Trash) ClearTrash() {
 	contents := t.Contents()
 	for _, content := range contents {

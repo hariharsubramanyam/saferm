@@ -46,6 +46,7 @@ func main() {
 	clearTrash := flag.Bool("cleartrash", false, "Delete everything in the .safetrash")
 	verbose := flag.Bool("verbose", false, "Print verbose output during trash operations")
 	used := flag.Bool("used", false, "See the space used in the trash and its total size in MB")
+	recursive := flag.Bool("r", false, "Recursive delete (for directories)")
 	flag.Parse()
 
 	userTrash := trash.NewTrash()
@@ -76,9 +77,14 @@ func main() {
 	}
 
 	if flag.NArg() > 0 {
-		if trash.PathExists(flag.Arg(0)) {
-			// Delete the specified path.
-			userTrash.DeleteFile(flag.Arg(0))
+		path := flag.Arg(0)
+		if trash.PathExists(path) {
+			if *recursive {
+				fmt.Println("Here i am")
+				userTrash.Delete(path)
+			} else {
+				userTrash.DeleteFile(path)
+			}
 		}
 	}
 
