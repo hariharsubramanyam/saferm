@@ -1,5 +1,7 @@
 package trash
 
+// Useful file utilities.
+
 import (
 	"os" // For file ops.
 )

@@ -5,13 +5,13 @@ updating the config file. Most of this funcionality is in the Trash struct.
 package trash
 
 import (
-	"bufio"
-	"errors"
-	"fmt"
-	"io/ioutil"
-	"os"
-	"path/filepath"
-	"strconv"
+	"bufio"         // For reading the config file.
+	"errors"        // For returning errors if the path is invalid.
+	"fmt"           // For verbose logging.
+	"io/ioutil"     // For writing the config file.
+	"os"            // For delete, rename, directory access, and much more.
+	"path/filepath" // For combining and manipulating path strings.
+	"strconv"       // For parsing and integers and converting integers to strings.
 )
 
 // Trash is the object representing useful info about the .safetrash.
@@ -23,13 +23,15 @@ type Trash struct {
 	Verbose      bool
 }
 
-// NewTrash creates a Trash object (reading from the .trashconfig, if it exists).
+// NewTrash creates a *Trash object (reading from the .trashconfig, if it exists).
 // If there is no .trashconfig, then the .safetrash begins with a default capacity
 // (see the constants.go file).
 func NewTrash() *Trash {
 	return NewTrashWithPaths(HomeDirectoryPath(), TrashDirectoryName, ConfigFileName)
 }
 
+// NewTrashWithPaths creates a *Trash with its location and names as injected dependencies, this
+// can be useful for testing.
 func NewTrashWithPaths(dirContainingTrash string, trashName string, configFileName string) *Trash {
 	t := &Trash{}
 

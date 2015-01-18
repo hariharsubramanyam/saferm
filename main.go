@@ -74,7 +74,7 @@ func main() {
 			userTrash.TrashSize, "MB")
 	}
 
-	// Delete the arguments the user has provided.
+	// Delete the paths the user has provided.
 	for _, path := range flag.Args() {
 		if trash.PathExists(path) {
 			if *recursive {
