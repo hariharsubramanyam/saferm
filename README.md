@@ -4,7 +4,7 @@ Safe `rm`is a command line utility written in Golang which moves files to a `.sa
 
 #Usage
 
-`saferm [options] <path>`
+`saferm [options] <path1> <path2> ...`
 
 The options are:
 
