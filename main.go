@@ -13,7 +13,7 @@ number in the .trashconfig). When the contents of the .safetrash together exceed
 oldest contents of the .safetrash will be deleted until the actual size of the .safetrash falls
 below the specified trash size (this is not implemented yet).
 
-`saferm [options] <path>`
+`saferm [options] <path1> <path2> ...`
 
 The options are:
 
@@ -74,11 +74,10 @@ func main() {
 			userTrash.TrashSize, "MB")
 	}
 
-	if flag.NArg() > 0 {
-		path := flag.Arg(0)
+	// Delete the arguments the user has provided.
+	for _, path := range flag.Args() {
 		if trash.PathExists(path) {
 			if *recursive {
-				fmt.Println("Here i am")
 				userTrash.Delete(path)
 			} else {
 				userTrash.DeleteFile(path)
