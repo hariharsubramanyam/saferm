@@ -1,8 +1,11 @@
 /*
-Safe rm is a command line utility which tries to make the "rm" command safer.
 
 Running "saferm <path>" will not delete a file, but will instead move it into a ~/.safetrash/
 directory.
+
+Safe `rm`is a command line utility written in Golang which moves files to a `.safetrash/`
+directory instead of deleting them. When the `.safetrash/` directory gets too full,
+the oldest item in `.safetrash/` will be deleted.
 
 The .safetrash contains a configuration file called .trashconfig, which lists the files in the
 .safetrash. The .trashconfig also contains the TRASH SIZE of the .safetrash (this is the first
@@ -10,26 +13,21 @@ number in the .trashconfig). When the contents of the .safetrash together exceed
 oldest contents of the .safetrash will be deleted until the actual size of the .safetrash falls
 below the specified trash size (this is not implemented yet).
 
-Currently, the usage of saferm is as follows:
+`saferm [options] <path>`
 
-saferm <path>
-Move the FILE at the path to the .safetrash.
+The options are:
 
-saferm -trashsize <MB>
-Change the trash size to the given number of megabytes.
+`-setsize` - Set the size of the `.safetrash` in MB.
 
-Next, I will implement
+`-contents` - List the contents of the `.safetrash`.
 
-saferm -r <path>
-If <path> is a file, it will be moved to the .safetrash. If it is a directory, it will be
-recursively moved to the .safetrash.
+`-cleartrash` - Delete everything in the `.safetrash`.
 
-saferm -cleartrash
-Permanently delete the contents of the .safetrash.
+`-verbose` - Print details of what `saferm` is doing.
 
-saferm -contents
-List the contents of the .safetrash.
+`-used` - Print the space used and the total size of the `safetrash` (ex. `30 MB out of 50 MB`).
 
+`-r` - Recursive deletes (for directories).
 */
 package main
 
